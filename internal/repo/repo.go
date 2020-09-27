@@ -7,9 +7,10 @@ import (
 )
 
 type LinkRepo interface {
-	AddLongLink(url string, ctx context.Context) error
-	SetShortLink(url, code string, ctx context.Context) error
-	GetLongLinkByCode(code string, ctx context.Context) (string, error)
+	AddLongLink(ctx context.Context, url string) error
+	SetShortLink(ctx context.Context, url, code string) error
+	GetLongLinkByCode(ctx context.Context, code string) (string, error)
+	GetCodeByLongLink(ctx context.Context, url string) (string, error)
 	GetNextSeq(ctx context.Context) (uint64, error)
 }
 
@@ -19,7 +20,7 @@ type Opts struct {
 	Database string
 	User string
 	Password string
-	Timeout time.Duration
+	Timeout int
 }
 
 func New(opts Opts) (LinkRepo, error) {
@@ -38,7 +39,7 @@ func New(opts Opts) (LinkRepo, error) {
 	}
 	repo := postgres{
 		pool: pool,
-		timeout: opts.Timeout,
+		timeout: time.Duration(opts.Timeout) * time.Second,
 	}
 	return &repo, nil
 }

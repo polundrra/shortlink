@@ -1,0 +1,12 @@
+ServerPort = ":9000"
+ReadTimeout = 3
+IdleTimeout = 3
+WriteTimeout = 3
+
+[RepoOpts]
+Host = "db"
+Port = 5432
+Database = "mychat"
+User = "polina"
+Password = "super_secret"
+Timeout = 1
