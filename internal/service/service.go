@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"github.com/polundrra/shortlink/internal/repo"
-	"time"
 )
 
 type Service interface {
@@ -14,7 +13,6 @@ type Service interface {
 func New(opts repo.Opts, repo repo.LinkRepo) Service {
 	return &linkService{
 		repo: repo,
-		timeout: time.Duration(opts.Timeout) * time.Second,
 	}
 }
 

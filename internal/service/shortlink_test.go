@@ -97,19 +97,6 @@ func (s *LinkServiceSuit) TestCreateShortLink_CodeExists() {
 	a.Equal(exCode, res)
 }
 
-/*func (s *LinkServiceSuit) TestCreateShortLink() {
-	defer s.mockCtrl.Finish()
-
-	ctx := context.Background()
-	url := "foo12345"
-	code :=
-
-	s.repoMock.EXPECT().GetCodeByLongLink(ctx, url).Times(1).Return("", nil)
-	s.repoMock.EXPECT().SetLink(ctx, url, code, false).Times(1).Return(nil)
-
-
-}*/
-
 func (s *LinkServiceSuit) TestCreateShortLink_IsCodeExistsErr() {
 	defer s.mockCtrl.Finish()
 	a := assert.New(s.T())
@@ -159,6 +146,90 @@ func (s *LinkServiceSuit) TestCreateShortLink_GetCodeByLongLinkErr() {
 	a.Equal("", res)
 }
 
+func (s *LinkServiceSuit) TestCreateShortLink() {
+	defer s.mockCtrl.Finish()
+	a := assert.New(s.T())
+
+	ctx := context.Background()
+	url := "foo"
+	customEnd := ""
+	code := "1"
+
+	s.repoMock.EXPECT().GetCodeByLongLink(ctx, url).Times(1).Return("", nil)
+	s.repoMock.EXPECT().GetNextSeq(ctx).Times(1).Return(uint64(1), nil)
+	s.repoMock.EXPECT().IsCodeExists(ctx, code).Times(1).Return(false, nil)
+	s.repoMock.EXPECT().SetLink(ctx, url, code, false).Times(1).Return(nil)
+
+	res, err := s.SUT.CreateShortLink(ctx, url, customEnd)
+	a.NoError(err)
+	a.Equal(code, res)
+}
+
+func (s *LinkServiceSuit) TestCreateShortLink_SetLinkErr() {
+	defer s.mockCtrl.Finish()
+	a := assert.New(s.T())
+
+	ctx := context.Background()
+	url := "foo"
+	customEnd := ""
+	code := "1"
+	expected := errors.New("any")
+
+	s.repoMock.EXPECT().GetCodeByLongLink(ctx, url).Times(1).Return("", nil)
+	s.repoMock.EXPECT().GetNextSeq(ctx).Times(1).Return(uint64(1), nil)
+	s.repoMock.EXPECT().IsCodeExists(ctx, code).Times(1).Return(false, nil)
+	s.repoMock.EXPECT().SetLink(ctx, url, code, false).Times(1).Return(expected)
+
+	res, err := s.SUT.CreateShortLink(ctx, url, customEnd)
+	a.Error(expected, err)
+	a.Equal("", res)
+}
+
+func (s *LinkServiceSuit) TestGetLongLink() {
+	defer s.mockCtrl.Finish()
+	a := assert.New(s.T())
+
+	ctx := context.Background()
+	code := "f"
+	url := "foo123"
+
+	s.repoMock.EXPECT().GetLongLinkByCode(ctx, code).Times(1).Return(url, nil)
+
+	res, err := s.SUT.GetLongLink(ctx, code)
+	a.NoError(err)
+	a.Equal(url, res)
+}
+
+func (s *LinkServiceSuit) TestGetLongLink_GetLongLingByCodeErr() {
+	defer s.mockCtrl.Finish()
+	a := assert.New(s.T())
+
+	ctx := context.Background()
+	code := "f"
+	expected := errors.New("any")
+
+	s.repoMock.EXPECT().GetLongLinkByCode(ctx, code).Times(1).Return("", expected)
+
+	res, err := s.SUT.GetLongLink(ctx, code)
+	a.Error(expected, err)
+	a.Equal("", res)
+}
+
+func (s *LinkServiceSuit) TestGetLongLink_ErrLinkNotFound() {
+	defer s.mockCtrl.Finish()
+	a := assert.New(s.T())
+
+	ctx := context.Background()
+	code := "f"
+	url := ""
+
+	s.repoMock.EXPECT().GetLongLinkByCode(ctx, code).Times(1).Return(url, nil)
+
+	res, err := s.SUT.GetLongLink(ctx, code)
+	a.Error(ErrLongLinkNotFound, err)
+	a.Equal(url, res)
+}
+
 func TestToBase62(t *testing.T) {
 	a := assert.New(t)
 
@@ -179,4 +250,3 @@ func TestToBase62(t *testing.T) {
 		a.Equal(tc.expected, res)
 	}
 }
-

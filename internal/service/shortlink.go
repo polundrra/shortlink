@@ -3,18 +3,13 @@ package service
 import (
 	"context"
 	"github.com/polundrra/shortlink/internal/repo"
-	"time"
 )
 
 type linkService struct {
 	repo repo.LinkRepo
-	timeout time.Duration
 }
 
 func (l linkService) GetLongLink(ctx context.Context, code string) (string, error) {
-	ctx, cancel := context.WithTimeout(ctx, l.timeout)
-	defer cancel()
-
 	url, err := l.repo.GetLongLinkByCode(ctx, code)
 	if err != nil {
 		return "", err
