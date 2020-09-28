@@ -17,4 +17,4 @@ GET /{code}
 Response: 308 Location: google.com
 ```
 
-Запуск тестов - go test ./... -cover Для интеграции с базой поднимется контейнер - должен умереть после выполнения тестов
+Посмотреть покрытие - `go tool cover -html=coverage.out`
