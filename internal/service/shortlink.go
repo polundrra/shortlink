@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"github.com/polundrra/shortlink/internal/repo"
-	"strings"
 	"time"
 )
 
@@ -102,13 +101,13 @@ func toBase62(n uint64) string {
 		return string(digits[0])
 	}
 
-	var sb strings.Builder
+	var res string
 	for n > 0 {
-		sb.WriteByte(digits[n % length])
+		res = string(digits[n % length]) + res
 		n = n / length
 	}
 
-	return sb.String()
+	return res
 }
 
 

@@ -29,7 +29,7 @@ func TestPostgres(t *testing.T) {
 	suite.Run(t, new(PostgresSuite))
 }
 
-func (s *PostgresSuite) SetupSuite() {
+func (s *PostgresSuite) SetupTest() {
 	pool, err := dockertest.NewPool("")
 	if err != nil {
 		s.T().Logf("error creating testing env: %v", err)
@@ -85,7 +85,7 @@ func (s *PostgresSuite) SetupSuite() {
 	s.SUT = sut.(*postgres)
 }
 
-func (s *PostgresSuite) TearDownSuite() {
+func (s *PostgresSuite) TearDownTest() {
 	if err := s.pool.Purge(s.postgres); err != nil {
 		s.T().Logf("couldn't kill test postgres container: %v", err)
 	}
@@ -97,7 +97,7 @@ type row struct {
 	IsCustom sql.NullBool
 }
 
-func (s *PostgresSuite) SetLink() {
+func (s *PostgresSuite) TestSetLink() {
 	longLink := "foo"
 	code := "f"
 	isCustom := false
@@ -134,22 +134,26 @@ func (s *PostgresSuite) SetLink() {
 	s.Assert().Equal(false, res3)
 }
 
-func (s *PostgresSuite) GetLongLinkByCode() {
+func (s *PostgresSuite) TestGetLongLinkByCode() {
 	ctx := context.Background()
 	code1 := "f"
 	url1 := "foo"
 	url2 := "bar"
 	code2 := "b"
 
-	_, err := s.db.Exec("insert into link(url, code) values ($1, $2), ($3, $4)", url1, code1, url2, code2)
+
+
+	_, err := s.db.Exec("insert into link(url, code, is_custom) values ($1, $2, true), ($3, $4, false)", url1, code1, url2, code2)
 	s.Assert().NoError(err)
 
 	res, err := s.SUT.GetLongLinkByCode(ctx, code1)
 	s.Assert().NoError(err)
-	s.Assert().Equal("foo", res)
+	s.Assert().Equal(url1, res)
 }
 
-func (s *PostgresSuite) GetCodeByLongLink() {
+
+
+func (s *PostgresSuite) TestGetCodeByLongLink() {
 	ctx := context.Background()
 	longLink := "foo"
 
@@ -172,21 +176,16 @@ func (s *PostgresSuite) GetCodeByLongLink() {
 	s.Assert().Equal("2", res2)
 }
 
-func (s *PostgresSuite) GetNextSeq() {
+func (s *PostgresSuite) TestGetNextSeq() {
 	ctx := context.Background()
-
-	res, err := s.SUT.GetNextSeq(ctx)
-	s.Assert().NoError(err)
-	s.Assert().Equal(1, res)
-
 	for i := 0; i < 5; i++ {
-		res, err = s.SUT.GetNextSeq(ctx)
+		res, err := s.SUT.GetNextSeq(ctx)
 		s.Assert().NoError(err)
+		s.Assert().Equal(uint64(i+1), res)
 	}
-	s.Assert().Equal(6, res)
 }
 
-func (s *PostgresSuite) isCodeExists() {
+func (s *PostgresSuite) TestIsCodeExists() {
 	ctx := context.Background()
 	code := "f"
 

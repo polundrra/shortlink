@@ -17,3 +17,4 @@ func New(opts repo.Opts, repo repo.LinkRepo) Service {
 		timeout: time.Duration(opts.Timeout) * time.Second,
 	}
 }
+
