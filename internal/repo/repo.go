@@ -7,11 +7,11 @@ import (
 )
 
 type LinkRepo interface {
-	AddLongLink(ctx context.Context, url string) error
-	SetShortLink(ctx context.Context, url, code string) error
+	SetLink(ctx context.Context, url, code string, isCustom bool) error
 	GetLongLinkByCode(ctx context.Context, code string) (string, error)
 	GetCodeByLongLink(ctx context.Context, url string) (string, error)
 	GetNextSeq(ctx context.Context) (uint64, error)
+	IsCodeExists(ctx context.Context, code string) (bool, error)
 }
 
 type Opts struct {

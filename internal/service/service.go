@@ -8,7 +8,7 @@ import (
 
 type Service interface {
 	GetLongLink(ctx context.Context, code string) (string, error)
-	GetShortLink(ctx context.Context, url, customEnd string) (string, error)
+	CreateShortLink(ctx context.Context, url, customEnd string) (string, error)
 }
 
 func New(opts repo.Opts, repo repo.LinkRepo) Service {

@@ -2,9 +2,7 @@ package service
 
 import (
 	"context"
-	"github.com/jackc/pgx"
 	"github.com/polundrra/shortlink/internal/repo"
-	"regexp"
 	"strings"
 	"time"
 )
@@ -22,15 +20,39 @@ func (l linkService) GetLongLink(ctx context.Context, code string) (string, erro
 	if err != nil {
 		return "", err
 	}
+
 	if url == "" {
 		return "", ErrLongLinkNotFound
 	}
+
 	return url, nil
 }
 
-func (l linkService) GetShortLink(ctx context.Context, url, customEnd string) (string, error) {
-	ctx, cancel := context.WithTimeout(ctx, l.timeout)
-	defer cancel()
+func (l linkService) CreateShortLink(ctx context.Context, url, customEnd string) (string, error) {
+	isCustom := false
+	if customEnd != "" {
+		isCustom = true
+
+		exists, err := l.repo.IsCodeExists(ctx, customEnd)
+		if err != nil {
+			return "", err
+		}
+
+		if exists {
+			exUrl, err := l.repo.GetLongLinkByCode(ctx, customEnd)
+			if err != nil {
+				return "", err
+			}
+
+			if url == exUrl {
+				return customEnd, nil
+			}
+
+			return "", ErrCodeConflict
+		}
+
+		return customEnd, l.repo.SetLink(ctx, url, customEnd, isCustom)
+	}
 
 	code, err := l.repo.GetCodeByLongLink(ctx, url)
 	if err != nil {
@@ -38,71 +60,55 @@ func (l linkService) GetShortLink(ctx context.Context, url, customEnd string) (s
 	}
 
 	if code != "" {
-		if customEnd == "" {
-			return code, nil
-		}
-		return code, ErrShortLinkExists
-	}
-	if code == "no rows" {
-		if err := l.repo.AddLongLink(ctx, url); err != nil {
-			return "", err
-		}
+		return code, nil
 	}
 
-	if customEnd != ""{
-		if !validateEnding(customEnd) {
-			return "", ErrInvalidEnding
-		}
-		if err := l.repo.SetShortLink(ctx, url, customEnd); err != nil {
-			notUnique:= pgx.PgError{Code: "23505"}
-			if err == notUnique {
-				return "", ErrShortLinkExists
-			}
-			return "", err
-		}
-		return customEnd, nil
-	}
-
-	nextVal, err := l.repo.GetNextSeq(ctx)
+	code, err = l.genCode(ctx)
 	if err != nil {
 		return "", err
 	}
 
-	if err := l.repo.SetShortLink(ctx, url, toBase62(nextVal)); err != nil {
-		notUnique:= pgx.PgError{Code: "23505"}
-		if err == notUnique {
-			for err == notUnique {
-				nextVal, err = l.repo.GetNextSeq(ctx)
-				if err != nil {
-					return "", err
-				}
-				err = l.repo.SetShortLink(ctx, url, toBase62(nextVal))
-			}
-			if err != nil {
-				return "", err
-			}
-		}
+	if err := l.repo.SetLink(ctx, url, code, isCustom); err != nil {
 		return "", err
 	}
-	return toBase62(nextVal), nil
+
+	return code, nil
+}
+
+func (l *linkService) genCode(ctx context.Context) (string, error) {
+	exists := true
+	var code string
+	for exists {
+		seq, err := l.repo.GetNextSeq(ctx)
+		if err != nil {
+			return "", err
+		}
+
+		code = toBase62(seq)
+		exists, err = l.repo.IsCodeExists(ctx, code)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return code, nil
 }
 
 func toBase62(n uint64) string {
 	digits := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	length := uint64(len(digits))
+
 	if n == 0 {
 		return string(digits[0])
 	}
-	var sb strings.Builder
-	for ; n > 0; n = n / length {
-		sb.WriteByte(digits[n % length])
-	}
-	return sb.String()
-}
 
-func validateEnding(ending string) bool {
-	regex:= regexp.MustCompile("^[a-zA-Z0-9-_]+&")
-	return regex.MatchString(ending)
+	var sb strings.Builder
+	for n > 0 {
+		sb.WriteByte(digits[n % length])
+		n = n / length
+	}
+
+	return sb.String()
 }
 
 

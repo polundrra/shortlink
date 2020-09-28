@@ -6,7 +6,7 @@ WriteTimeout = 3
 [RepoOpts]
 Host = "db"
 Port = 5432
-Database = "mychat"
-User = "polina"
-Password = "super_secret"
+Database = "shortlink"
+User = "superuser"
+Password = "secret"
 Timeout = 1

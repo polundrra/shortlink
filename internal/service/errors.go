@@ -8,6 +8,6 @@ func (e LinkError) Error() string {
 
 const (
 	ErrLongLinkNotFound LinkError = "Long link not found, check correctness of short link"
-	ErrShortLinkExists LinkError = "Short link already exists"
-	ErrInvalidEnding LinkError = "Url ending must only contain alphanumeric characters, hyphens, underscores"
+	ErrCodeConflict LinkError = "Short link already exists"
+	ErrInvalidCode LinkError = "Custom link must contain only alphanumeric characters, hyphens, underscores with length 1-32"
 )

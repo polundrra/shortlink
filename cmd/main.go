@@ -1,12 +1,12 @@
 package main
 
 import (
+	"github.com/BurntSushi/toml"
 	"github.com/polundrra/shortlink/internal/api"
 	"github.com/polundrra/shortlink/internal/repo"
 	"github.com/polundrra/shortlink/internal/service"
 	"github.com/valyala/fasthttp"
 	"log"
-	"github.com/BurntSushi/toml"
 	"time"
 )
 
